@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lucky Star Gift Rain</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "M PLUS Rounded 1c", sans-serif;
+
+        background: radial-gradient(circle at 25% 20%, #ffe6f4, transparent 40%),
+          radial-gradient(circle at 75% 30%, #ffd4ec, transparent 40%),
+          linear-gradient(135deg, #ffc9e8, #ffb8df, #ffd7f0);
+
+        overflow: hidden;
+        transition: 0.6s;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      body.night {
+        background: radial-gradient(circle at 20% 20%, #37204c, transparent 40%),
+          radial-gradient(circle at 80% 30%, #241334, transparent 40%),
+          linear-gradient(135deg, #14081f, #1c0f2a, #0f0719);
+      }
+      html,
+      body {
+        touch-action: manipulation;
+      }
+      body {
+        height: 100dvh;
+      }
+
+      .layer {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .layer.back {
+        z-index: 0;
+      }
+      .layer.mid {
+        z-index: 1;
+      }
+      .layer.front {
+        z-index: 2;
+      }
+
+      .star {
+        position: absolute;
+        top: -40px;
+        animation: fall linear forwards;
+        opacity: 0.9;
+        filter: drop-shadow(0 0 6px rgba(255, 255, 180, 0.7));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-width: 40px;
+        min-height: 40px;
+        cursor: crosshair;
+      }
+
+      .meteor {
+        filter: drop-shadow(0 0 10px rgba(255, 50, 50, 0.9));
+        cursor: not-allowed;
+      }
+
+      .star.twinkle {
+        animation: fall linear forwards, twinkle 2s infinite alternate;
+      }
+
+      @keyframes twinkle {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.2);
+        }
+      }
+
+      @keyframes fall {
+        0% {
+          transform: translateY(-40px) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(110vh) translateX(var(--drift));
+          opacity: 0.85;
+        }
+      }
+
+      .shooting {
+        position: absolute;
+        font-size: 32px;
+        z-index: 10;
+        cursor: crosshair;
+        animation: shoot 4s linear forwards;
+        filter: drop-shadow(0 0 10px #fff);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .star,
+      .shooting {
+        pointer-events: auto !important;
+      }
+
+      @keyframes shoot {
+        0% {
+          transform: translate(-50px, -50px) scale(1);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(120vw, 120vh) scale(0.6);
+          opacity: 0;
+        }
+      }
+
+      .card {
+        position: relative;
+        z-index: 5;
+        width: 90%;
+        max-width: 650px;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: clamp(20px, 4vw, 40px);
+        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .card::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+
+      body.night .card {
+        background: rgba(30, 18, 45, 0.9);
+        color: #ffd7ff;
+      }
+
+      .title {
+        font-size: clamp(24px, 5vw, 42px);
+        font-weight: 800;
+      }
+      .subtitle {
+        opacity: 0.7;
+        margin-top: 8px;
+        font-size: clamp(14px, 3vw, 16px);
+      }
+
+      .countdown {
+        font-size: clamp(38px, 10vw, 64px);
+        font-weight: 800;
+        margin-top: 15px;
+        color: #ff4fa8;
+      }
+
+      body.night .countdown {
+        color: #ff8cff;
+      }
+
+      .nextEvent {
+        font-size: clamp(16px, 4vw, 22px);
+        margin-top: 6px;
+      }
+      .section {
+        margin-top: 20px;
+      }
+      .events {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .event,
+      .zone {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 210, 235, 0.7);
+        font-size: clamp(14px, 3vw, 16px);
+      }
+      .event {
+        width: auto;
+        min-width: 160px;
+      }
+      .zones {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .portal {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(200, 160, 255, 0.5);
+        margin: 4px;
+        font-size: clamp(14px, 3vw, 16px);
+      }
+
+      #scoreBox {
+        margin-top: 10px;
+        font-weight: 700;
+        font-size: clamp(18px, 4vw, 22px);
+        display: none;
+      }
+
+      #comboUI {
+        color: #ff9d00;
+        font-size: clamp(14px, 3vw, 18px);
+        font-weight: 800;
+        display: none;
+        animation: pulse 0.4s infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.15);
+        }
+      }
+
+      #levelDisplay {
+        font-size: clamp(16px, 3.5vw, 18px);
+        color: #8a2be2;
+        margin-bottom: 5px;
+        font-weight: 800;
+      }
+
+      body.night #levelDisplay {
+        color: #d4a5ff;
+      }
+
+      #levelUpBanner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        font-size: clamp(40px, 10vw, 80px);
+        font-weight: 900;
+        color: #ffcc00;
+        text-shadow: 0 0 20px #fff, 0 0 40px #ff4fa8;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      #levelUpBanner.active {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      #secretMessage {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%) scale(0.8);
+        padding: 12px 24px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        font-weight: 800;
+        letter-spacing: 1px;
+        z-index: 2000;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      #secretMessage.show {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+      .scorePopup {
+        position: absolute;
+        color: #ff4fa8;
+        font-weight: 800;
+        pointer-events: none;
+        z-index: 100;
+        animation: pop 0.8s forwards;
+      }
+      .scorePopup.bad {
+        color: #ff3232;
+      }
+
+      @keyframes pop {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-40px) scale(1.3);
+          opacity: 0;
+        }
+      }
+
+      .nightToggle {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        opacity: 0.3;
+        cursor: pointer;
+        pointer-events: auto;
+        font-size: 24px;
+        transition: 0.2s;
+      }
+      .nightToggle:hover {
+        opacity: 1;
+      }
+
+      #damageFlash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 0, 0, 0.3);
+        z-index: 999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.1s;
+      }
+    </style>
+  </head>
+
+  <body class="night">
+    <div id="damageFlash"></div>
+    <div id="levelUpBanner">LEVEL UP!</div>
+
+    <div class="layer back" id="back"></div>
+    <div class="layer mid" id="mid"></div>
+    <div class="layer front" id="front"></div>
+
+    <div class="card">
+      <div class="nightToggle" onclick="toggleNight()">🌙</div>
+
+      <div class="title">⭐ Lucky Star Gift Rain ⭐</div>
+      <div class="subtitle">⭐ Next star shower begins in ⭐</div>
+
+      <div id="scoreBox">
+        <div id="levelDisplay">⭐ Level: 1</div>
+        ⭐ Score: <span id="score">0</span>
+        <span id="comboUI">🔥 0x COMBO!</span>
+      </div>
+
+      <div class="countdown" id="countdown">--:--:--</div>
+      <div class="nextEvent" id="nextEvent"></div>
+
+      <div class="section">
+        <h3 style="margin: 0 0 10px 0">⭐ Gift Rain Times ⭐</h3>
+        <div class="events" id="eventList"></div>
+      </div>
+
+      <div class="section">
+        <h3 style="margin: 0 0 10px 0">⭐ Zones ⭐</h3>
+        <div class="zones">
+          <div class="zone">Herba Village</div>
+          <div class="zone">Vienta Village</div>
+          <div class="zone">Kastleton</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="margin: 0 0 5px 0">🌀 Rift Events 🌀</h3>
+        <p style="font-size: 0.85em; opacity: 0.8; margin: 0 0 10px 0">
+          Alternates between Stonegard and Herba
+        </p>
+        <div id="riftList"></div>
+      </div>
+    </div>
+
+    <script>
+      let score = 0;
+      let started = false;
+      let combo = 0;
+      let lastClick = 0;
+      let difficulty = 1;
+      let level = 1;
+      let nextLevelThreshold = 300;
+
+      const scoreBoxEl = document.getElementById("scoreBox");
+      const scoreEl = document.getElementById("score");
+      const comboUIEl = document.getElementById("comboUI");
+      const damageFlashEl = document.getElementById("damageFlash");
+      const levelDisplayEl = document.getElementById("levelDisplay");
+      const levelUpBannerEl = document.getElementById("levelUpBanner");
+
+      function createPopup(text, x, y, isBad = false) {
+        const popup = document.createElement("div");
+        popup.className = "scorePopup" + (isBad ? " bad" : "");
+        popup.innerText = text;
+        popup.style.left = x + "px";
+        popup.style.top = y + "px";
+        document.body.appendChild(popup);
+        setTimeout(() => popup.remove(), 800);
+      }
+
+      function triggerLevelUp() {
+        level++;
+        nextLevelThreshold += 300 + level * 100;
+        levelDisplayEl.innerText = "⭐ Level: " + level;
+
+        levelUpBannerEl.classList.add("active");
+        setTimeout(() => levelUpBannerEl.classList.remove("active"), 2000);
+
+        const allEntities = document.querySelectorAll(".star, .shooting");
+        allEntities.forEach((el) => {
+          if (el.dataset.captured) return;
+          el.dataset.captured = "true";
+
+          const rect = el.getBoundingClientRect();
+
+          el.innerText = "💥";
+          el.style.transform = "scale(3)";
+          el.style.opacity = "0";
+          el.style.transition = "transform 0.4s, opacity 0.4s";
+
+          if (!el.classList.contains("meteor")) {
+            createPopup("+2⭐", rect.left, rect.top);
+            score += 2;
+          }
+
+          setTimeout(() => el.remove(), 400);
+        });
+
+        scoreEl.innerText = score;
+      }
+
+      function addScore(amount, x, y) {
+        if (!started) {
+          started = true;
+          scoreBoxEl.style.display = "block";
+        }
+
+        const now = Date.now();
+        if (now - lastClick < 600) {
+          combo++;
+        } else {
+          combo = 0;
+        }
+        lastClick = now;
+
+        const final = Math.floor(amount * (1 + combo * 0.2));
+        score += final;
+        scoreEl.innerText = score;
+
+        if (score >= nextLevelThreshold) {
+          triggerLevelUp();
+        }
+
+        difficulty = 1 + score / 500;
+        difficulty = Math.min(difficulty, 3.5);
+
+        if (combo > 2) {
+          comboUIEl.style.display = "inline-block";
+          comboUIEl.innerText = `🔥 x${combo + 1} COMBO!`;
+        } else {
+          comboUIEl.style.display = "none";
+        }
+
+        createPopup("+" + final + "⭐", x, y);
+      }
+
+      function takeDamage(x, y) {
+        combo = 0;
+        comboUIEl.style.display = "none";
+        score = Math.max(0, score - 10);
+        scoreEl.innerText = score;
+
+        damageFlashEl.style.opacity = "1";
+        setTimeout(() => {
+          damageFlashEl.style.opacity = "0";
+        }, 150);
+
+        createPopup("-10 💔", x, y, true);
+      }
+
+      function explodeNearby(x, y) {
+        const stars = document.querySelectorAll(".star:not(.meteor)");
+        stars.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          const dx = rect.left - x;
+          const dy = rect.top - y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 80 && Math.random() > 0.3 && !el.dataset.captured) {
+            el.dataset.captured = "true";
+            el.innerText = "✨";
+            el.style.transform = "scale(1.5)";
+            setTimeout(() => el.remove(), 150);
+            addScore(1, rect.left, rect.top);
+          }
+        });
+      }
+
+      function spawnStar(layer, baseSpeed) {
+        const el = document.createElement("div");
+        const roll = Math.random();
+
+        const isMeteor = roll < 0.02;
+        const isGift = roll > 0.94 && !isMeteor;
+
+        if (isMeteor) {
+          el.className = "star meteor";
+          el.innerText = "☄️";
+        } else {
+          el.className = "star" + (Math.random() > 0.7 ? " twinkle" : "");
+          el.innerText = isGift ? "🎁" : Math.random() > 0.5 ? "⭐" : "🌟";
+        }
+
+        el.style.left = Math.random() * 100 + "vw";
+        el.style.setProperty("--drift", Math.random() * 100 - 50 + "px");
+
+        const speedMultiplier = isMeteor ? 1.5 : 1;
+        const speed = baseSpeed * difficulty * speedMultiplier;
+        const duration = (7 + Math.random() * 5) / speed;
+        el.style.animationDuration = duration + "s";
+
+        const catchEvent = (e) => {
+          if (el.dataset.captured) return;
+          el.dataset.captured = "true";
+
+          let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+          if (isMeteor) {
+            takeDamage(clientX, clientY);
+            el.innerText = "💥";
+            el.style.transform = "scale(2)";
+          } else if (isGift) {
+            addScore(3, clientX, clientY);
+            explodeNearby(clientX, clientY);
+            el.innerText = "💖";
+            el.style.transform = "scale(1.8)";
+          } else {
+            addScore(1, clientX, clientY);
+            el.innerText = "✨";
+            el.style.transform = "scale(1.5)";
+          }
+
+          setTimeout(() => el.remove(), 150);
+        };
+
+        el.onmouseenter = catchEvent;
+        el.ontouchstart = catchEvent;
+
+        layer.appendChild(el);
+        setTimeout(() => el.remove(), duration * 1000);
+      }
+
+      function spawnShooting() {
+        const el = document.createElement("div");
+        el.className = "shooting";
+        el.innerText = "⭐";
+
+        el.style.left = "-50px";
+        el.style.top = Math.random() * 50 + "vh";
+
+        const duration = 4.0 - difficulty * 0.3;
+        el.style.animationDuration = duration + "s";
+
+        const catchEvent = (e) => {
+          if (el.dataset.captured) return;
+          el.dataset.captured = "true";
+
+          let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+          addScore(20, clientX, clientY);
+          explodeNearby(clientX, clientY);
+
+          el.innerText = "✨";
+          el.style.transition = "0.2s";
+          el.style.transform = "scale(2)";
+          setTimeout(() => el.remove(), 200);
+        };
+
+        el.onmouseenter = catchEvent;
+        el.ontouchstart = catchEvent;
+
+        document.getElementById("front").appendChild(el);
+        setTimeout(() => {
+          if (el.parentNode) el.remove();
+        }, duration * 1000);
+      }
+
+      setInterval(() => spawnStar(document.getElementById("back"), 0.5), 700);
+      setInterval(() => spawnStar(document.getElementById("mid"), 1), 320);
+      setInterval(() => spawnStar(document.getElementById("front"), 1.8), 120);
+
+      setInterval(() => {
+        if (Math.random() > 0.8 - difficulty * 0.05) {
+          spawnShooting();
+        }
+      }, 2000);
+
+      const weekday = ["01:30", "05:30", "12:30", "21:30"];
+      const weekend = ["01:30", "05:30", "12:30", "16:30", "21:30"];
+      const riftWeekday = ["01:30", "05:30", "12:30", "21:30"];
+      const riftWeekend = ["01:30", "05:30", "12:30", "16:30", "21:30"];
+
+      function getEvents(date, type) {
+        const d = date.getUTCDay();
+        const isWeekend = d === 0 || d === 6;
+        if (type === "rift") return isWeekend ? riftWeekend : riftWeekday;
+        return isWeekend ? weekend : weekday;
+      }
+
+      function toLocal(date, time) {
+        const [h, m] = time.split(":");
+        return new Date(
+          Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate(),
+            h,
+            m
+          )
+        );
+      }
+
+      function nextEvent(type) {
+        const now = new Date();
+        for (let i = 0; i < 3; i++) {
+          const d = new Date(now);
+          d.setUTCDate(now.getUTCDate() + i);
+          for (const t of getEvents(d, type)) {
+            const dt = toLocal(d, t);
+            if (dt > now) return dt;
+          }
+        }
+      }
+
+      function update() {
+        const now = new Date();
+        const next = nextEvent("normal");
+        const diff = next - now;
+
+        const countdown = document.getElementById("countdown");
+        const nextEventEl = document.getElementById("nextEvent");
+        const eventList = document.getElementById("eventList");
+        const riftList = document.getElementById("riftList");
+
+        countdown.innerText =
+          String(Math.floor(diff / 3600000)).padStart(2, "0") +
+          ":" +
+          String(Math.floor(diff / 60000) % 60).padStart(2, "0") +
+          ":" +
+          String(Math.floor(diff / 1000) % 60).padStart(2, "0");
+
+        nextEventEl.innerText = "⭐ " + next.toLocaleString();
+
+        eventList.innerHTML = "";
+        getEvents(new Date(), "normal").forEach((t) => {
+          const d = document.createElement("div");
+          d.className = "event";
+          d.innerText =
+            "⭐ " +
+            toLocal(new Date(), t).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          eventList.appendChild(d);
+        });
+
+        riftList.innerHTML = "";
+        getEvents(new Date(), "rift").forEach((t) => {
+          const d = document.createElement("div");
+          d.className = "portal";
+          d.innerText =
+            "🌀 " +
+            toLocal(new Date(), t).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          riftList.appendChild(d);
+        });
+      }
+
+      setInterval(update, 1000);
+      update();
+
+      function toggleNight() {
+        document.body.classList.toggle("night");
+      }
+
+      const secrets = [
+        { code: "shiba", message: "shiba is goated" },
+        { code: "yoink", message: "YOINK ON TOP" },
+      ];
+      let typed = "";
+
+      document.addEventListener("keydown", (e) => {
+        typed += e.key.toLowerCase();
+
+        if (typed.length > 10) typed = typed.slice(-10);
+
+        secrets.forEach((s) => {
+          if (typed.endsWith(s.code)) {
+            const msg = document.getElementById("secretMessage");
+            msg.innerText = s.message;
+            msg.classList.add("show");
+
+            setTimeout(() => {
+              msg.classList.remove("show");
+            }, 4000);
+
+            typed = "";
+          }
+        });
+      });
+    </script>
+    <div id="secretMessage"></div>
+  </body>
+</html>
