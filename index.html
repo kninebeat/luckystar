@@ -145,7 +145,7 @@
         max-width: 650px;
         max-height: 85vh;
         overflow-y: auto;
-        padding: clamp(20px, 4vw, 40px);
+        padding: clamp(15px, 3vw, 25px);
         border-radius: 34px;
         background: rgba(255, 255, 255, 0.92);
         box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
@@ -172,7 +172,6 @@
         margin-top: 8px;
         font-size: clamp(14px, 3vw, 16px);
       }
-
       .countdown {
         font-size: clamp(38px, 10vw, 64px);
         font-weight: 800;
@@ -189,7 +188,7 @@
         margin-top: 6px;
       }
       .section {
-        margin-top: 20px;
+        margin-top: 15px;
       }
       .events {
         display: flex;
@@ -200,7 +199,7 @@
 
       .event,
       .zone {
-        padding: 8px 14px;
+        padding: 4px 10px;
         border-radius: 999px;
         background: rgba(255, 210, 235, 0.7);
         font-size: clamp(14px, 3vw, 16px);
@@ -218,7 +217,7 @@
 
       .portal {
         display: inline-block;
-        padding: 8px 14px;
+        padding: 4px 10px;
         border-radius: 999px;
         background: rgba(200, 160, 255, 0.5);
         margin: 4px;
@@ -349,6 +348,56 @@
         opacity: 0;
         transition: opacity 0.1s;
       }
+
+      .skills-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .skill-rune {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: help;
+        position: relative;
+        transition: 0.3s;
+        opacity: 0.3;
+        filter: grayscale(1);
+        pointer-events: auto;
+      }
+
+      .skill-rune.unlocked {
+        opacity: 1;
+        filter: grayscale(0);
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .skill-rune .cooldown-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0%;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: inherit;
+        transition: height linear;
+      }
+
+      .skill-rune .level-tag {
+        font-size: 10px;
+        position: absolute;
+        bottom: -15px;
+        font-weight: 800;
+      }
     </style>
   </head>
 
@@ -370,6 +419,52 @@
         <div id="levelDisplay">⭐ Level: 1</div>
         ⭐ Score: <span id="score">0</span>
         <span id="comboUI">🔥 0x COMBO!</span>
+        <div
+          style="
+            width: 100%;
+            background: #eee;
+            height: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+          "
+        >
+          <div
+            id="levelProgress"
+            style="
+              width: 0%;
+              background: #ff4fa8;
+              height: 100%;
+              border-radius: 5px;
+              transition: 0.3s;
+            "
+          ></div>
+        </div>
+      </div>
+      <div class="skills-container">
+        <div
+          class="skill-rune"
+          id="skill-shield"
+          onmouseenter="activateShield()"
+        >
+          <div class="cooldown-overlay" id="cd-shield"></div>
+          🌕<span class="level-tag">LV 3</span>
+        </div>
+        <div
+          class="skill-rune"
+          id="skill-magnet"
+          onmouseenter="activateMagnet()"
+        >
+          <div class="cooldown-overlay" id="cd-magnet"></div>
+          🧲<span class="level-tag">LV 5</span>
+        </div>
+        <div
+          class="skill-rune"
+          id="skill-freeze"
+          onmouseenter="activateFreeze()"
+        >
+          <div class="cooldown-overlay" id="cd-freeze"></div>
+          ❄️<span class="level-tag">LV 8</span>
+        </div>
       </div>
 
       <div class="countdown" id="countdown">--:--:--</div>
@@ -406,6 +501,10 @@
       let difficulty = 1;
       let level = 1;
       let nextLevelThreshold = 100;
+      let isMagnetActive = false;
+      let isFreezeActive = false;
+      let shieldCharges = 0;
+      let skillCooldowns = { shield: false, magnet: false, freeze: false };
 
       const scoreBoxEl = document.getElementById("scoreBox");
       const scoreEl = document.getElementById("score");
@@ -423,10 +522,71 @@
         document.body.appendChild(popup);
         setTimeout(() => popup.remove(), 800);
       }
+      function activateShield() {
+        if (level >= 3 && !skillCooldowns.shield) {
+          shieldCharges = 2;
+          startCooldown("shield", 15000);
 
+          createPopup(
+            "SHIELD UP! 🌕",
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+        }
+      }
+
+      function activateMagnet() {
+        if (level >= 5 && !skillCooldowns.magnet) {
+          isMagnetActive = true;
+          startCooldown("magnet", 20000);
+
+          setTimeout(() => {
+            isMagnetActive = false;
+          }, 5000);
+          createPopup(
+            "MAGNET ACTIVE! 🧲",
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+        }
+      }
+
+      function activateFreeze() {
+        if (level >= 8 && !skillCooldowns.freeze) {
+          isFreezeActive = true;
+          startCooldown("freeze", 25000);
+
+          setTimeout(() => {
+            isFreezeActive = false;
+          }, 3000);
+          createPopup(
+            "TIME FROZEN! ❄️",
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+        }
+      }
+
+      function startCooldown(skill, ms) {
+        skillCooldowns[skill] = true;
+        const overlay = document.getElementById(`cd-${skill}`);
+        overlay.style.transition = "none";
+        overlay.style.height = "100%";
+        setTimeout(() => {
+          overlay.style.transition = `height ${ms}ms linear`;
+          overlay.style.height = "0%";
+        }, 50);
+        setTimeout(() => {
+          skillCooldowns[skill] = false;
+        }, ms);
+      }
       function triggerLevelUp() {
-        level++;
-        nextLevelThreshold += 300 + level * 100;
+        let leveledUp = false;
+        while (score >= nextLevelThreshold) {
+          level++;
+          nextLevelThreshold += 100 + level * 100;
+          leveledUp = true;
+        }
         levelDisplayEl.innerText = "⭐ Level: " + level;
 
         levelUpBannerEl.classList.add("active");
@@ -452,7 +612,15 @@
           setTimeout(() => el.remove(), 400);
         });
 
+        if (level >= 3)
+          document.getElementById("skill-shield").classList.add("unlocked");
+        if (level >= 5)
+          document.getElementById("skill-magnet").classList.add("unlocked");
+        if (level >= 8)
+          document.getElementById("skill-freeze").classList.add("unlocked");
+
         scoreEl.innerText = score;
+        updateProgressBar();
       }
 
       function addScore(amount, x, y) {
@@ -472,12 +640,12 @@
         const final = Math.floor(amount * (1 + combo * 0.2));
         score += final;
         scoreEl.innerText = score;
-
         if (score >= nextLevelThreshold) {
           triggerLevelUp();
         }
+        updateProgressBar();
 
-        difficulty = 1 + score / 500;
+        difficulty = 1 + score / 700;
         difficulty = Math.min(difficulty, 3.5);
 
         if (combo > 2) {
@@ -489,8 +657,28 @@
 
         createPopup("+" + final + "⭐", x, y);
       }
+      function updateProgressBar() {
+        let prevThreshold = nextLevelThreshold - (100 + level * 100);
+        if (level === 1) prevThreshold = 0;
+
+        let progressInLevel = score - prevThreshold;
+        let totalNeededInLevel = nextLevelThreshold - prevThreshold;
+
+        let progressPercent = Math.max(
+          0,
+          Math.min((progressInLevel / totalNeededInLevel) * 100, 100)
+        );
+
+        document.getElementById("levelProgress").style.width =
+          progressPercent + "%";
+      }
 
       function takeDamage(x, y) {
+        if (shieldCharges > 0) {
+          shieldCharges--;
+          createPopup("SHIELDED! 🛡️", x, y);
+          return;
+        }
         combo = 0;
         comboUIEl.style.display = "none";
         score = Math.max(0, score - 10);
@@ -537,11 +725,26 @@
           el.innerText = isGift ? "🎁" : Math.random() > 0.5 ? "⭐" : "🌟";
         }
 
+        const magnetCheck = setInterval(() => {
+          if (isMagnetActive && !el.dataset.captured && !isMeteor) {
+            const rect = el.getBoundingClientRect();
+
+            if (rect.top > 100 && rect.top < window.innerHeight - 100) {
+              catchEvent({ clientX: rect.left, clientY: rect.top });
+              clearInterval(magnetCheck);
+            }
+          }
+        }, 100);
+
         el.style.left = Math.random() * 100 + "vw";
         el.style.setProperty("--drift", Math.random() * 100 - 50 + "px");
 
+        const playerPowerScale = 1 + (level - 1) * 0.1;
+        el.style.transform = `scale(${playerPowerScale})`;
+
         const speedMultiplier = isMeteor ? 1.5 : 1;
-        const speed = baseSpeed * difficulty * speedMultiplier;
+        let currentDifficulty = isFreezeActive ? difficulty * 0.2 : difficulty;
+        const speed = baseSpeed * currentDifficulty * speedMultiplier;
         const duration = (7 + Math.random() * 5) / speed;
         el.style.animationDuration = duration + "s";
 
@@ -584,7 +787,8 @@
 
         el.style.left = "-50px";
         el.style.top = Math.random() * 50 + "vh";
-
+        const playerPowerScale = 1 + (level - 1) * 0.15;
+        el.style.transform = `scale(${playerPowerScale})`;
         const duration = 4.0 - difficulty * 0.3;
         el.style.animationDuration = duration + "s";
 
