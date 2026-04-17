@@ -73,6 +73,7 @@
         min-width: 40px;
         min-height: 40px;
         cursor: crosshair;
+        will-change: transform;
       }
 
       .meteor {
@@ -97,14 +98,14 @@
 
       @keyframes fall {
         0% {
-          transform: translateY(-40px) translateX(0);
+          transform: translate3d(0, -40px, 0);
           opacity: 0;
         }
         10% {
           opacity: 1;
         }
         100% {
-          transform: translateY(110vh) translateX(var(--drift));
+          transform: translate3d(var(--drift), 110vh, 0);
           opacity: 0.85;
         }
       }
@@ -121,6 +122,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        will-change: transform;
       }
 
       .star,
@@ -130,14 +132,14 @@
 
       @keyframes shoot {
         0% {
-          transform: translate(-50px, -50px) scale(1);
+          transform: translate3d(-50px, -50px, 0) scale(1);
           opacity: 0;
         }
         10% {
           opacity: 1;
         }
         100% {
-          transform: translate(120vw, 120vh) scale(0.6);
+          transform: translate3d(120vw, 120vh, 0) scale(0.6);
           opacity: 0;
         }
       }
@@ -512,6 +514,10 @@
       let shieldCharges = 0;
       let skillCooldowns = { shield: false, magnet: false, freeze: false };
 
+      const activeStars = new Set();
+
+      let gameIntervals = [];
+
       const scoreBoxEl = document.getElementById("scoreBox");
       const scoreEl = document.getElementById("score");
       const comboUIEl = document.getElementById("comboUI");
@@ -528,11 +534,11 @@
         document.body.appendChild(popup);
         setTimeout(() => popup.remove(), 800);
       }
+
       function activateShield() {
         if (level >= 3 && !skillCooldowns.shield) {
           shieldCharges = 2;
           startCooldown("shield", 15000);
-
           createPopup(
             "SHIELD UP! 🌕",
             window.innerWidth / 2,
@@ -545,7 +551,6 @@
         if (level >= 5 && !skillCooldowns.magnet) {
           isMagnetActive = true;
           startCooldown("magnet", 20000);
-
           setTimeout(() => {
             isMagnetActive = false;
           }, 5000);
@@ -561,7 +566,6 @@
         if (level >= 8 && !skillCooldowns.freeze) {
           isFreezeActive = true;
           startCooldown("freeze", 25000);
-
           setTimeout(() => {
             isFreezeActive = false;
           }, 3000);
@@ -586,6 +590,7 @@
           skillCooldowns[skill] = false;
         }, ms);
       }
+
       function triggerLevelUp() {
         let leveledUp = false;
         while (score >= nextLevelThreshold) {
@@ -598,10 +603,9 @@
         levelUpBannerEl.classList.add("active");
         setTimeout(() => levelUpBannerEl.classList.remove("active"), 2000);
 
-        const allEntities = document.querySelectorAll(".star, .shooting");
-        allEntities.forEach((el) => {
-          if (el.dataset.captured) return;
-          el.dataset.captured = "true";
+        activeStars.forEach((el) => {
+          activeStars.delete(el);
+          clearTimeout(el._removalTimer);
 
           const rect = el.getBoundingClientRect();
 
@@ -663,6 +667,7 @@
 
         createPopup("+" + final + "⭐", x, y);
       }
+
       function updateProgressBar() {
         let prevThreshold = nextLevelThreshold - (100 + level * 100);
         if (level === 1) prevThreshold = 0;
@@ -699,21 +704,57 @@
       }
 
       function explodeNearby(x, y) {
-        const stars = document.querySelectorAll(".star:not(.meteor)");
-        stars.forEach((el) => {
+        activeStars.forEach((el) => {
+          if (el.classList.contains("meteor")) return;
+
           const rect = el.getBoundingClientRect();
           const dx = rect.left - x;
           const dy = rect.top - y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 80 && Math.random() > 0.3 && !el.dataset.captured) {
-            el.dataset.captured = "true";
+          if (dist < 80 && Math.random() > 0.3) {
+            activeStars.delete(el);
+            clearTimeout(el._removalTimer);
+
             el.innerText = "✨";
             el.style.transform = "scale(1.5)";
             setTimeout(() => el.remove(), 150);
             addScore(1, rect.left, rect.top);
           }
         });
+      }
+
+      function handleStarCapture(el, clientX, clientY) {
+        if (!activeStars.has(el)) return;
+
+        activeStars.delete(el);
+
+        clearTimeout(el._removalTimer);
+
+        if (el.classList.contains("shooting")) {
+          addScore(20, clientX, clientY);
+          explodeNearby(clientX, clientY);
+          el.innerText = "✨";
+          el.style.transition = "0.2s";
+          el.style.transform = "scale(2)";
+          setTimeout(() => el.remove(), 200);
+        } else if (el.classList.contains("meteor")) {
+          takeDamage(clientX, clientY);
+          el.innerText = "💥";
+          el.style.transform = "scale(2)";
+          setTimeout(() => el.remove(), 150);
+        } else if (el.innerText === "🎁") {
+          addScore(3, clientX, clientY);
+          explodeNearby(clientX, clientY);
+          el.innerText = "💖";
+          el.style.transform = "scale(1.8)";
+          setTimeout(() => el.remove(), 150);
+        } else {
+          addScore(1, clientX, clientY);
+          el.innerText = "✨";
+          el.style.transform = "scale(1.5)";
+          setTimeout(() => el.remove(), 150);
+        }
       }
 
       function spawnStar(layer, baseSpeed) {
@@ -731,17 +772,6 @@
           el.innerText = isGift ? "🎁" : Math.random() > 0.5 ? "⭐" : "🌟";
         }
 
-        const magnetCheck = setInterval(() => {
-          if (isMagnetActive && !el.dataset.captured && !isMeteor) {
-            const rect = el.getBoundingClientRect();
-
-            if (rect.top > 100 && rect.top < window.innerHeight - 100) {
-              catchEvent({ clientX: rect.left, clientY: rect.top });
-              clearInterval(magnetCheck);
-            }
-          }
-        }, 100);
-
         el.style.left = Math.random() * 100 + "vw";
         el.style.setProperty("--drift", Math.random() * 100 - 50 + "px");
 
@@ -754,36 +784,13 @@
         const duration = (7 + Math.random() * 5) / speed;
         el.style.animationDuration = duration + "s";
 
-        const catchEvent = (e) => {
-          if (el.dataset.captured) return;
-          el.dataset.captured = "true";
-
-          let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-          let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-
-          if (isMeteor) {
-            takeDamage(clientX, clientY);
-            el.innerText = "💥";
-            el.style.transform = "scale(2)";
-          } else if (isGift) {
-            addScore(3, clientX, clientY);
-            explodeNearby(clientX, clientY);
-            el.innerText = "💖";
-            el.style.transform = "scale(1.8)";
-          } else {
-            addScore(1, clientX, clientY);
-            el.innerText = "✨";
-            el.style.transform = "scale(1.5)";
-          }
-
-          setTimeout(() => el.remove(), 150);
-        };
-
-        el.onmouseenter = catchEvent;
-        el.ontouchstart = catchEvent;
-
         layer.appendChild(el);
-        setTimeout(() => el.remove(), duration * 1000);
+        activeStars.add(el);
+
+        el._removalTimer = setTimeout(() => {
+          activeStars.delete(el);
+          if (el.parentNode) el.remove();
+        }, duration * 1000);
       }
 
       function spawnShooting() {
@@ -798,40 +805,85 @@
         const duration = 4.0 - difficulty * 0.3;
         el.style.animationDuration = duration + "s";
 
-        const catchEvent = (e) => {
-          if (el.dataset.captured) return;
-          el.dataset.captured = "true";
-
-          let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-          let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-
-          addScore(20, clientX, clientY);
-          explodeNearby(clientX, clientY);
-
-          el.innerText = "✨";
-          el.style.transition = "0.2s";
-          el.style.transform = "scale(2)";
-          setTimeout(() => el.remove(), 200);
-        };
-
-        el.onmouseenter = catchEvent;
-        el.ontouchstart = catchEvent;
-
         document.getElementById("front").appendChild(el);
-        setTimeout(() => {
+        activeStars.add(el);
+
+        el._removalTimer = setTimeout(() => {
+          activeStars.delete(el);
           if (el.parentNode) el.remove();
         }, duration * 1000);
       }
 
-      setInterval(() => spawnStar(document.getElementById("back"), 0.5), 700);
-      setInterval(() => spawnStar(document.getElementById("mid"), 1), 320);
-      setInterval(() => spawnStar(document.getElementById("front"), 1.8), 120);
-
-      setInterval(() => {
-        if (Math.random() > 0.8 - difficulty * 0.05) {
-          spawnShooting();
+      function handleGlobalInteraction(e) {
+        const target = e.target;
+        if (
+          target.classList.contains("star") ||
+          target.classList.contains("shooting")
+        ) {
+          let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+          handleStarCapture(target, clientX, clientY);
         }
-      }, 2000);
+      }
+      document.addEventListener("mouseover", handleGlobalInteraction);
+      document.addEventListener("touchstart", handleGlobalInteraction, {
+        passive: true,
+      });
+
+      function startGameLoops() {
+        if (gameIntervals.length > 0) return;
+
+        gameIntervals.push(
+          setInterval(
+            () => spawnStar(document.getElementById("back"), 0.5),
+            700,
+          ),
+        );
+        gameIntervals.push(
+          setInterval(() => spawnStar(document.getElementById("mid"), 1), 320),
+        );
+        gameIntervals.push(
+          setInterval(
+            () => spawnStar(document.getElementById("front"), 1.8),
+            120,
+          ),
+        );
+
+        gameIntervals.push(
+          setInterval(() => {
+            if (Math.random() > 0.8 - difficulty * 0.05) spawnShooting();
+          }, 2000),
+        );
+
+        gameIntervals.push(
+          setInterval(() => {
+            if (!isMagnetActive) return;
+            activeStars.forEach((el) => {
+              if (!el.classList.contains("meteor")) {
+                const rect = el.getBoundingClientRect();
+                if (rect.top > 100 && rect.top < window.innerHeight - 100) {
+                  handleStarCapture(el, rect.left + 20, rect.top + 20);
+                }
+              }
+            });
+          }, 100),
+        );
+      }
+
+      function stopGameLoops() {
+        gameIntervals.forEach(clearInterval);
+        gameIntervals = [];
+      }
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          stopGameLoops();
+        } else {
+          startGameLoops();
+        }
+      });
+
+      startGameLoops();
 
       const weekday = ["01:30", "05:30", "12:30", "21:30"];
       const weekend = ["01:30", "05:30", "12:30", "16:30", "21:30"];
@@ -846,33 +898,47 @@
       }
 
       function getRiftLocationContinuous(eventDate) {
+        const referenceDate = new Date(Date.UTC(2026, 0, 1, 1, 30));
+        if (eventDate < referenceDate) return "Stonegard Castle";
 
-        const referenceDate = new Date(Date.UTC(2026, 0, 1, 1, 30)); 
-
-        const referenceLocation = "Stonegard Castle";
-
-        let count = 0;
+        let totalEvents = 0;
         let current = new Date(referenceDate);
 
-        while (current < eventDate) {
-          const times = getEvents(current, "rift");
+        const targetDateOnly = new Date(
+          Date.UTC(
+            eventDate.getUTCFullYear(),
+            eventDate.getUTCMonth(),
+            eventDate.getUTCDate(),
+          ),
+        );
 
-          for (const t of times) {
-            const dt = toLocal(current, t);
-
-            if (dt > referenceDate && dt <= eventDate) {
-              count++;
-            }
-          }
-
+        while (current < targetDateOnly) {
+          const day = current.getUTCDay();
+          const isWeekend = day === 0 || day === 6;
+          totalEvents += isWeekend ? 5 : 4;
           current.setUTCDate(current.getUTCDate() + 1);
         }
 
-        if (referenceLocation === "Stonegard Castle") {
-          return count % 2 === 0 ? "Stonegard Castle" : "Herba Village";
-        } else {
-          return count % 2 === 0 ? "Herba Village" : "Stonegard Castle";
+        const timesToday = getEvents(eventDate, "rift");
+        for (const t of timesToday) {
+          const [h, m] = t.split(":").map(Number);
+          const eventTimeToday = new Date(
+            Date.UTC(
+              eventDate.getUTCFullYear(),
+              eventDate.getUTCMonth(),
+              eventDate.getUTCDate(),
+              h,
+              m,
+            ),
+          );
+
+          if (eventTimeToday >= referenceDate && eventTimeToday <= eventDate) {
+            totalEvents++;
+          }
         }
+
+        const index = totalEvents - 1;
+        return index % 2 === 0 ? "Stonegard Castle" : "Herba Village";
       }
 
       function toLocal(date, time) {
@@ -933,24 +999,17 @@
         });
 
         riftList.innerHTML = "";
-
         const riftTimes = getEvents(now, "rift");
-
         riftTimes.forEach((t) => {
           const eventDate = toLocal(now, t);
-
           const d = document.createElement("div");
           d.className = "portal";
-
           const timeStr = eventDate.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           });
-
           const location = getRiftLocationContinuous(eventDate);
-
           d.innerText = `🌀 ${timeStr} • ${location}`;
-
           riftList.appendChild(d);
         });
       }
@@ -970,7 +1029,6 @@
 
       document.addEventListener("keydown", (e) => {
         typed += e.key.toLowerCase();
-
         if (typed.length > 10) typed = typed.slice(-10);
 
         secrets.forEach((s) => {
@@ -982,7 +1040,6 @@
             setTimeout(() => {
               msg.classList.remove("show");
             }, 4000);
-
             typed = "";
           }
         });
@@ -991,4 +1048,3 @@
     <div id="secretMessage"></div>
   </body>
 </html>
-
