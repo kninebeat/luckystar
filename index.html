@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -19,7 +19,8 @@
         align-items: center;
         font-family: "M PLUS Rounded 1c", sans-serif;
 
-        background: radial-gradient(circle at 25% 20%, #ffe6f4, transparent 40%),
+        background:
+          radial-gradient(circle at 25% 20%, #ffe6f4, transparent 40%),
           radial-gradient(circle at 75% 30%, #ffd4ec, transparent 40%),
           linear-gradient(135deg, #ffc9e8, #ffb8df, #ffd7f0);
 
@@ -30,7 +31,8 @@
       }
 
       body.night {
-        background: radial-gradient(circle at 20% 20%, #37204c, transparent 40%),
+        background:
+          radial-gradient(circle at 20% 20%, #37204c, transparent 40%),
           radial-gradient(circle at 80% 30%, #241334, transparent 40%),
           linear-gradient(135deg, #14081f, #1c0f2a, #0f0719);
       }
@@ -79,7 +81,9 @@
       }
 
       .star.twinkle {
-        animation: fall linear forwards, twinkle 2s infinite alternate;
+        animation:
+          fall linear forwards,
+          twinkle 2s infinite alternate;
       }
 
       @keyframes twinkle {
@@ -267,7 +271,9 @@
         font-size: clamp(40px, 10vw, 80px);
         font-weight: 900;
         color: #ffcc00;
-        text-shadow: 0 0 20px #fff, 0 0 40px #ff4fa8;
+        text-shadow:
+          0 0 20px #fff,
+          0 0 40px #ff4fa8;
         z-index: 1000;
         pointer-events: none;
         opacity: 0;
@@ -530,7 +536,7 @@
           createPopup(
             "SHIELD UP! 🌕",
             window.innerWidth / 2,
-            window.innerHeight / 2
+            window.innerHeight / 2,
           );
         }
       }
@@ -546,7 +552,7 @@
           createPopup(
             "MAGNET ACTIVE! 🧲",
             window.innerWidth / 2,
-            window.innerHeight / 2
+            window.innerHeight / 2,
           );
         }
       }
@@ -562,7 +568,7 @@
           createPopup(
             "TIME FROZEN! ❄️",
             window.innerWidth / 2,
-            window.innerHeight / 2
+            window.innerHeight / 2,
           );
         }
       }
@@ -666,7 +672,7 @@
 
         let progressPercent = Math.max(
           0,
-          Math.min((progressInLevel / totalNeededInLevel) * 100, 100)
+          Math.min((progressInLevel / totalNeededInLevel) * 100, 100),
         );
 
         document.getElementById("levelProgress").style.width =
@@ -839,6 +845,36 @@
         return isWeekend ? weekend : weekday;
       }
 
+      function getRiftLocationContinuous(eventDate) {
+
+        const referenceDate = new Date(Date.UTC(2026, 0, 1, 1, 30)); 
+
+        const referenceLocation = "Stonegard Castle";
+
+        let count = 0;
+        let current = new Date(referenceDate);
+
+        while (current < eventDate) {
+          const times = getEvents(current, "rift");
+
+          for (const t of times) {
+            const dt = toLocal(current, t);
+
+            if (dt > referenceDate && dt <= eventDate) {
+              count++;
+            }
+          }
+
+          current.setUTCDate(current.getUTCDate() + 1);
+        }
+
+        if (referenceLocation === "Stonegard Castle") {
+          return count % 2 === 0 ? "Stonegard Castle" : "Herba Village";
+        } else {
+          return count % 2 === 0 ? "Herba Village" : "Stonegard Castle";
+        }
+      }
+
       function toLocal(date, time) {
         const [h, m] = time.split(":");
         return new Date(
@@ -847,8 +883,8 @@
             date.getUTCMonth(),
             date.getUTCDate(),
             h,
-            m
-          )
+            m,
+          ),
         );
       }
 
@@ -897,15 +933,24 @@
         });
 
         riftList.innerHTML = "";
-        getEvents(new Date(), "rift").forEach((t) => {
+
+        const riftTimes = getEvents(now, "rift");
+
+        riftTimes.forEach((t) => {
+          const eventDate = toLocal(now, t);
+
           const d = document.createElement("div");
           d.className = "portal";
-          d.innerText =
-            "🌀 " +
-            toLocal(new Date(), t).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+
+          const timeStr = eventDate.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          const location = getRiftLocationContinuous(eventDate);
+
+          d.innerText = `🌀 ${timeStr} • ${location}`;
+
           riftList.appendChild(d);
         });
       }
@@ -946,3 +991,4 @@
     <div id="secretMessage"></div>
   </body>
 </html>
+
