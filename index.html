@@ -18,7 +18,7 @@
         justify-content: center;
         align-items: center;
         font-family: "M PLUS Rounded 1c", sans-serif;
-
+        font-size: 16px;
         background:
           radial-gradient(circle at 25% 20%, #ffe6f4, transparent 40%),
           radial-gradient(circle at 75% 30%, #ffd4ec, transparent 40%),
@@ -147,16 +147,26 @@
       .card {
         position: relative;
         z-index: 5;
-        width: 90%;
-        max-width: 650px;
-        max-height: 85vh;
+
+        width: 92%;
+        max-width: 720px;
+
+        max-height: 92vh;
         overflow-y: auto;
-        padding: clamp(15px, 3vw, 25px);
-        border-radius: 34px;
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
+
+        padding: clamp(16px, 3vw, 28px);
+        border-radius: 28px;
+
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(14px);
+
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+
         text-align: center;
         pointer-events: none;
+
+        transform: scale(min(1, 92vh / 820));
+        transform-origin: center;
       }
 
       .card::-webkit-scrollbar {
@@ -165,24 +175,31 @@
       }
 
       body.night .card {
-        background: rgba(30, 18, 45, 0.9);
+        background: rgba(30, 18, 45, 0.7);
+        backdrop-filter: blur(18px);
         color: #ffd7ff;
       }
 
       .title {
-        font-size: clamp(24px, 5vw, 42px);
+        font-size: clamp(28px, 5vw, 44px);
         font-weight: 800;
       }
+
       .subtitle {
-        opacity: 0.7;
-        margin-top: 8px;
-        font-size: clamp(14px, 3vw, 16px);
+        opacity: 0.75;
+        margin-top: 10px;
+        font-size: clamp(16px, 2.8vw, 18px);
       }
+
       .countdown {
-        font-size: clamp(38px, 10vw, 64px);
+        font-size: clamp(42px, 9vw, 70px);
         font-weight: 800;
-        margin-top: 15px;
-        color: #ff4fa8;
+        margin-top: 10px;
+        letter-spacing: 2px;
+      }
+      h3 {
+        font-size: 1.1em;
+        margin: 0 0 6px 0 !important;
       }
 
       body.night .countdown {
@@ -194,25 +211,33 @@
         margin-top: 6px;
       }
       .section {
-        margin-top: 15px;
+        margin-top: 18px;
       }
       .events {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
       }
 
       .event,
       .zone {
-        padding: 4px 10px;
+        padding: 6px 14px;
         border-radius: 999px;
-        background: rgba(255, 210, 235, 0.7);
-        font-size: clamp(14px, 3vw, 16px);
+        background: rgba(255, 210, 235, 0.85);
+        font-size: clamp(15px, 2.5vw, 17px);
+        font-weight: 600;
+      }
+      .event:hover,
+      .zone:hover,
+      .portal:hover {
+        transform: scale(1.05);
+        transition: 0.2s;
       }
       .event {
         width: auto;
-        min-width: 160px;
+        min-width: 120px;
       }
       .zones {
         display: flex;
@@ -223,17 +248,42 @@
 
       .portal {
         display: inline-block;
-        padding: 4px 10px;
+        padding: 6px 14px;
         border-radius: 999px;
-        background: rgba(200, 160, 255, 0.5);
+        background: rgba(200, 160, 255, 0.7);
         margin: 4px;
-        font-size: clamp(14px, 3vw, 16px);
+        font-size: clamp(14px, 2.5vw, 15px);
+        font-weight: 600;
+      }
+      .portal.next-rift {
+        background: linear-gradient(90deg, #7c4dff, #b388ff);
+        color: #fff;
+        box-shadow: 0 0 12px rgba(140, 100, 255, 0.7);
+      }
+      body.night .portal.next-rift {
+        background: linear-gradient(90deg, #b388ff, #e1bee7);
+        color: #2a0a3a;
+      }
+      .progress-bar {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.1);
+        height: 12px;
+        border-radius: 6px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff4fa8, #ff7ac6);
+        border-radius: 6px;
+        transition: 0.3s;
       }
 
       #scoreBox {
-        margin-top: 10px;
+        margin-top: 14px;
         font-weight: 700;
-        font-size: clamp(18px, 4vw, 22px);
+        font-size: clamp(20px, 3.5vw, 24px);
         display: none;
       }
 
@@ -365,28 +415,36 @@
       }
 
       .skill-rune {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: rgba(0, 0, 0, 0.1);
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+
+        background: rgba(0, 0, 0, 0.08);
+
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
-        cursor: help;
+
+        font-size: 22px;
+
+        cursor: pointer;
+
         position: relative;
-        transition: 0.3s;
-        opacity: 0.3;
+        transition: 0.25s;
+
+        opacity: 0.4;
         filter: grayscale(1);
         pointer-events: auto;
       }
-
       .skill-rune.unlocked {
         opacity: 1;
         filter: grayscale(0);
-        background: rgba(255, 255, 255, 0.5);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+
+        transform: translateY(-2px);
       }
 
       .skill-rune .cooldown-overlay {
@@ -436,16 +494,9 @@
             margin-top: 10px;
           "
         >
-          <div
-            id="levelProgress"
-            style="
-              width: 0%;
-              background: #ff4fa8;
-              height: 100%;
-              border-radius: 5px;
-              transition: 0.3s;
-            "
-          ></div>
+          <div class="progress-bar">
+            <div id="levelProgress" class="progress-fill"></div>
+          </div>
         </div>
       </div>
       <div class="skills-container">
@@ -983,8 +1034,6 @@
           ":" +
           String(Math.floor(diff / 1000) % 60).padStart(2, "0");
 
-        nextEventEl.innerText = "⭐ " + next.toLocaleString();
-
         eventList.innerHTML = "";
         getEvents(new Date(), "normal").forEach((t) => {
           const d = document.createElement("div");
@@ -1000,10 +1049,24 @@
 
         riftList.innerHTML = "";
         const riftTimes = getEvents(now, "rift");
+        let closestRift = null;
+
+        riftTimes.forEach((t) => {
+          const eventDate = toLocal(now, t);
+          if (eventDate > now && !closestRift) {
+            closestRift = eventDate;
+          }
+        });
+
         riftTimes.forEach((t) => {
           const eventDate = toLocal(now, t);
           const d = document.createElement("div");
+
           d.className = "portal";
+
+          if (closestRift && eventDate.getTime() === closestRift.getTime()) {
+            d.classList.add("next-rift");
+          }
           const timeStr = eventDate.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
